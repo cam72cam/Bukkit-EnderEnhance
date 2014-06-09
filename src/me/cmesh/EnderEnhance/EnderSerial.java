@@ -92,6 +92,17 @@ public class EnderSerial {
 		list.remove(location);
 		saveFile(uuid, list);
 	}
+	
+	public static boolean OwnsChest(UUID uuid, Location location) {
+		if (ownership.containsKey(uuid)) {
+			for (Location loc : ownership.get(uuid)) {
+				if (loc.equals(location)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
 	public static List<UUID> GetAllUUID() {
 		List<UUID> list = new ArrayList<UUID>();
@@ -117,5 +128,13 @@ public class EnderSerial {
 			ownership.put(uuid, list);
 		}
 		return ownership.get(uuid);
+	}
+	public static UUID GetOwner(Location location) {
+		for (UUID id : ownership.keySet()) {
+			if (OwnsChest(id, location)) {
+				return id;
+			}
+		}
+		return null;
 	}
 }

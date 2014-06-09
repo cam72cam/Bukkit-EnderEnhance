@@ -21,8 +21,6 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.metadata.FixedMetadataValue;
-import org.bukkit.metadata.MetadataValue;
 import org.bukkit.scheduler.BukkitScheduler;
 
 public class EnderListener implements Listener {
@@ -123,7 +121,7 @@ public class EnderListener implements Listener {
 					if (block.getType() == Material.HOPPER) {
 						Hopper h = (Hopper)block.getState();
 						block = getHopperBlock(h);
-						if (block.getType() == Material.ENDER_CHEST && playerId.equals(ownerEnderChest(block))) {
+						if (block.getType() == Material.ENDER_CHEST && EnderSerial.OwnsChest(playerId, block.getLocation())) {
 							MoveInventory(h.getInventory(), p.getEnderChest());
 						}
 					}
@@ -156,17 +154,6 @@ public class EnderListener implements Listener {
 		}
 	}
 	
-	private void markEnderChest(Block block, UUID uuid) {
-		block.setMetadata("owner", new FixedMetadataValue(EnderEnhance.Instance, uuid));
-	}
-	private UUID ownerEnderChest(Block block) {
-		List<MetadataValue> meta = block.getMetadata("owner");
-		if (meta.isEmpty()) {
-			return null;
-		}
-		return (UUID)meta.get(0).value();
-	}
-	
 	@EventHandler(priority = EventPriority.LOW)
 	public void onPlayerPlaceBlock(BlockPlaceEvent ev) {
 		Player player = ev.getPlayer();
@@ -176,14 +163,13 @@ public class EnderListener implements Listener {
 			if (!runners.containsKey(uuid)) {
 				runners.put(uuid, new EnderRunner(uuid));
 			}
-			markEnderChest(ev.getBlock(), uuid);
 		}
 	}
 	
 	@EventHandler(priority = EventPriority.LOW)
 	public void onPlayerBreakBlock(BlockBreakEvent ev) {
 		if (ev.getBlock().getType() == Material.ENDER_CHEST) {
-			UUID uuid = ownerEnderChest(ev.getBlock());
+			UUID uuid = EnderSerial.GetOwner(ev.getBlock().getLocation());
 			if (uuid != null) {
 				EnderSerial.RemoveChest(uuid, ev.getBlock().getLocation());
 				if (EnderSerial.GetByUUID(uuid).isEmpty()) {
